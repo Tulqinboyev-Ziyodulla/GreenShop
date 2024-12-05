@@ -1,1 +1,3 @@
-export const APi = process.env.NEXT_PUBLIC_API
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+export { API_URL };

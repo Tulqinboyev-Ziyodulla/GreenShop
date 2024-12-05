@@ -1,24 +1,45 @@
-"use client";
+import React, { ReactNode } from "react";
+import { X } from "lucide-react";
 
-import { CloseIcon } from '../public/images/icon';
-import React, { ReactNode, SetStateAction } from 'react';
-
-type ModalType = {
-    openModal:boolean;
-    setOpenModal:React.Dispatch<SetStateAction<boolean>>;
-    extraStyle?:string;
-    children:ReactNode
+interface ModalTypes {
+  children: ReactNode;
+  setOpenModal: React.Dispatch<React.SetStateAction<boolean>>;
+  openModal: boolean;
 }
 
-const Modal:React.FC<ModalType> = ({openModal, setOpenModal, extraStyle,children}) => {
+const ModalWrapper: React.FC<ModalTypes> = ({
+  children,
+  setOpenModal,
+  openModal,
+}) => {
+
   return (
-    <div onClick={(e) => (e.target as HTMLDivElement).id === "wrapper"  ? setOpenModal(false) : ""} id='wrapper' className={`fixed z-50 inset-0 bg-[#000]/20 backdrop-blur-sm flex items-center justify-center duration-300 ${openModal ? "scale-1" : "scale-0"}`}>
-      <div className={`p-4 bg-white shadow-lg relative  ${extraStyle}`}>
-        <button onClick={() => setOpenModal(false)} className='absolute right-[14px] top-[17px]'><CloseIcon/></button>
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          setOpenModal(false);
+        }
+      }}
+      className={`fixed inset-0 bg-[#000]/30 w-full flex items-center justify-center overflow-y-auto z-50 pt-[100px] ${
+        openModal
+          ? "scale-100 opacity-100"
+          : "scale-90 opacity-0 pointer-events-none"
+      }`}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="bg-white border-b-[10px] md:px-[100px] sm:px-[50px] px-[10px] py-[30px] relative shadow-lg sm:w-auto">
+        <button
+          aria-label="Close modal"
+          className="absolute top-3 right-3 text-[#46A358] hover:text-[#34A050] transition-colors"
+          onClick={() => setOpenModal(false)}
+        >
+          <X className="w-6 h-6" />
+        </button>
         {children}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Modal
+export default ModalWrapper;
