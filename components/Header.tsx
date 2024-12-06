@@ -1,276 +1,187 @@
 "use client";
-
-import { LogIn, Menu, Search, ShoppingCart, User2Icon, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import React, { useContext, useEffect, useState } from "react";
-import Button from "./ui/Button";
-import ModalWrapper from "./Modal";
-import LoginForm from "./FormComponents/LoginForm";
-import RegisterForm from "./FormComponents/RegisterForm";
-import VerifyUserForm from "./FormComponents/VerifyUserForm";
-import ForgotPassword from "./FormComponents/ForgotPassword";
-import ResetPassword from "./FormComponents/ResetPassword";
-import { Context } from "@/context/Context";
+import React, { useState, ChangeEvent, MouseEvent, useContext } from "react";
+import { Navbar } from "./Navbar";
+import { SearchIcon, OrderBasket, LoginIcon, HamburgerButtonIcon } from "@/assets/icon";
+import { Button } from "./Button";
+import { usePathname } from "next/navigation";
+import LoginModal from "./Login";
+import { Toaster } from "react-hot-toast";
+import { Badge } from "antd";
+import { Context } from "@/context/context";
 
-const Header = () => {
-  const navlinks = [
-    { path: "/", label: "Home" },
-    { path: "/shop", label: "Shop" },
-    { path: "/plant-care", label: "Plant Care" },
-    { path: "/blogs", label: "Blogs" },
+interface LinkType {
+  id: number;
+  title: string;
+  path: string;
+  isActive: boolean;
+}
+
+const Header: React.FC = () => {
+  const pathname = usePathname();
+  
+  const context = useContext(Context);
+  
+  const basketList = context?.basketList || []; 
+  
+  const [searchInput, setSearchInput] = useState<boolean>(false);
+  const [openModal, setOpenModal] = useState<boolean>(false);
+  const [loginModal, setLoginModal] = useState<boolean>(false);
+
+  const navList: LinkType[] = [
+    {
+      id: 1,
+      title: "Home",
+      path: "/",
+      isActive: pathname === "/",
+    },
+    {
+      id: 2,
+      title: "Shop",
+      path: "/shop",
+      isActive: pathname === "/shop",
+    },
+    {
+      id: 3,
+      title: "Plant Care",
+      path: "/plant",
+      isActive: pathname === "/plant",
+    },
+    {
+      id: 4,
+      title: "Blogs",
+      path: "/blogs",
+      isActive: pathname === "/blogs",
+    },
   ];
 
-  const { globalState, setGlobalState } = useContext(Context);
-
-  const pathname = usePathname();
-  const location = useRouter();
-  const [openModal, setOpenModal] = useState(false);
-  const [formAction, setFormAction] = useState("login");
-  const [userEmail, setUserEmail] = useState("");
-
-  const [openNavbar, setOpenNavbar] = useState(false);
-
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("access_token");
-      const name = localStorage.getItem("firstName");
-      setAccessToken(token);
-      setUserName(name);
+  const handleSearchChangeInput = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value === "") {
+      setTimeout(() => {
+        setSearchInput(false);
+      }, 2000);
     }
-  }, [globalState]);
+  };
+
+  const closeModal = (e: MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLDivElement).id === "modal-wrapper") {
+      setOpenModal(false);
+    }
+  };
 
   return (
-    <>
-      <header className="bg-white">
-        <div className="container mx-auto">
-          <div className="flex w-full items-center justify-between border-b border-[#46A35880] md:py-0 py-3 px-3">
-            <div className="flex items-center">
-              <button
-                className="md:hidden block mr-[10px]"
-                onClick={() => setOpenNavbar(true)}
-              >
-                <Menu />
-              </button>
-              <Link href="/" className="flex items-center gap-1">
-                <Image
-                  src="/logo.svg"
-                  alt="Logo"
-                  width={150}
-                  height={34}
-                  priority
-                  style={{ width: "150px", height: "34px" }}
-                  className="hidden md:flex"
-                />
-                <Image
-                  src="/favicon.svg"
-                  alt="Logo"
-                  width={30}
-                  height={30}
-                  priority
-                  style={{ width: "30px", height: "30px" }}
-                  className="flex md:hidden"
-                />
-              </Link>
-            </div>
-            <nav
-              className="hidden md:flex items-center md:gap-[30px]"
-              role="navigation"
-              aria-label="Main Navigation"
-            >
-              {navlinks.map(({ path, label }) => (
-                <Link
-                  key={path}
-                  href={path}
-                  className={`border-b-[3px] ${
-                    pathname === path
-                      ? "border-green-600 text-green-700"
-                      : "border-transparent"
-                  } py-5 font-semibold`}
-                >
-                  {label}
-                </Link>
-              ))}
-            </nav>
-
-            <div className="flex items-center gap-[20px] md:gap-[30px]">
-              <button className="text-gray-600" aria-label="Search">
-                <Search className="h-5 w-5" />
-              </button>
-              <div className="relative">
-                <button className="text-gray-600" aria-label="Shopping Cart">
-                  <ShoppingCart className="h-5 w-5" />
-                </button>
-                <span className="absolute -top-1 -right-1 flex items-center w-[12px] h-[12px] text-[8px] justify-center bg-green-600 text-white p-0 rounded-full">
-                  0
-                </span>
-              </div>
-              {!accessToken ? (
-                <Button
-                  iconLeft={<LogIn />}
-                  title="Login"
-                  type="button"
-                  onClick={() => setOpenModal(true)}
-                />
-              ) : (
-                <Button
-                  title={userName ?? "User"}
-                  type="button"
-                  iconLeft={<User2Icon />}
-                  onClick={() => {
-                    location.push("/profile");
-                  }}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {openNavbar && (
-        <div
-          id="outer-wrapper"
-          className="fixed top-0 left-0 w-full h-screen backdrop-blur-sm z-10"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setOpenNavbar(false);
-            }
-          }}
-        >
+    <header className="pt-[42px] md:pt-[25px] fixed w-full z-10 bg-white">
+      <Toaster position="top-center" reverseOrder={false} />
+      <div className="container md:border-b-[1px] gap-[8px] md:gap-0 border-[#A2D0AB] px-[24px] md:px-0 flex items-center justify-between">
+        <Link className="hidden md:block pb-[17px]" href={"/"}>
+          <Image
+            src={"/site-logo.svg"}
+            width={150}
+            height={34}
+            alt="site-logo"
+            priority={true}
+          />
+        </Link>
+        <Navbar />
+        <div className="hidden md:flex items-center space-x-[30px] pb-[11px]">
           <button
-            onClick={() => setOpenNavbar(false)}
-            className="absolute top-3 left-2 w-5 h-5"
+            className="flex items-center"
+            onClick={() => setSearchInput(false)}
           >
-            <X />
+            {!searchInput && <SearchIcon />}
+            <input
+              onChange={handleSearchChangeInput}
+              className={`${
+                searchInput ? "py-[14px] pl-[41px] w-[300px]" : "w-[0px]"
+              } search-input duration-300 outline-none focus:shadow text-[14px] font-normal leading-[16px] bg-[#F8F8F8] rounded-[10px] `}
+              type="text"
+              placeholder="Find your plants"
+              autoComplete="off"
+              aria-label="Find your plants"
+              name="plants-search"
+            />
           </button>
-          <div className="flex flex-col items-start justify-between h-screen bg-white w-1/2 py-[50px] sm:px-[30px] px-[10px]">
-            <div className="flex flex-col items-start justify-start gap-[20px]">
-              {navlinks.map(({ path, label }) => (
-                <Link
-                  key={path}
-                  href={path}
-                  className={`border-b-[3px] ${
-                    pathname === path
-                      ? "border-green-600 text-green-700"
-                      : "border-transparent"
-                  } font-semibold`}
-                >
-                  {label}
-                </Link>
-              ))}
-            </div>
-            <div>
-              <p>
-                Call: <Link href={"tel:+998999999999"}>+998999999999</Link>{" "}
-              </p>
-              <span>Support centre: Tashkent, Chilanzar, 1000092</span>
-            </div>
+          <Badge
+            style={{ color: "white", backgroundColor: "#46A258" }}
+            size="default"
+            count={basketList.length}
+          >
+            <Link className="hover:text-[#46A258]" href={"/shop/order"}>
+              <OrderBasket />
+            </Link>
+          </Badge>
+          <Button
+            onClick={() => setLoginModal(true)}
+            bgBtn={false}
+            title="Login"
+            iconPosition="prev"
+            icon={<LoginIcon />}
+            buttonWidth={100}
+          />
+        </div>
+        <input
+          className="block md:hidden py-[14px] pl-[41px] w-[90%] search-input duration-300 outline-none focus:shadow text-[14px] font-normal leading-[16px] bg-[#F8F8F8] rounded-[10px]"
+          type="text"
+          placeholder="Find your plants"
+          autoComplete="off"
+          aria-label="Find your plants"
+          name="plants-search"
+        />
+        <button
+          onClick={() => setOpenModal(true)}
+          className="md:hidden w-[45px] h-[45px] bg-[#46A258] rounded-[14px] shadow flex items-center justify-center opacity-90"
+        >
+          <HamburgerButtonIcon />
+        </button>
+      </div>
+      <div
+        onClick={closeModal}
+        id="modal-wrapper"
+        className={`${
+          openModal ? "left-0" : "left-[-100%]"
+        } modal duration-500 fixed top-0 z-[2] backdrop-blur-md h-[100vh] w-full`}
+      >
+        <div
+          className={`absolute w-[80%] h-[100vh] bg-[#46A258] opacity-90 duration-500 ${openModal ? "right-0" : "right-[-200%]"
+            } p-10 flex flex-col space-y-5`}
+        >
+          {navList.map((item: LinkType) => (
+            <Link
+              onClick={() => setOpenModal(false)}
+              className={`font-normal pb-[31px] text-[16px] leading-[20px] text-white`}
+              key={item.id}
+              href={item.path}
+            >
+              <p className="text-center">{item.title}</p>
+            </Link>
+          ))}
+          <div className="flex items-center justify-center space-x-5">
+            <Badge
+              style={{ color: "white", backgroundColor: "#46A258" }}
+              size="default"
+              count={basketList.length}
+            >
+              <Link
+                className="text-white hover:text-[#46A258]"
+                href={"/shop/order"}
+              >
+                <OrderBasket />
+              </Link>
+            </Badge>
+            <Button
+              onClick={() => setLoginModal(true)}
+              bgBtn={false}
+              title="Login"
+              iconPosition="prev"
+              icon={<LoginIcon />}
+              buttonWidth={100}
+            />
           </div>
         </div>
-      )}
-
-      <ModalWrapper setOpenModal={setOpenModal} openModal={openModal}>
-        <div className="w-full">
-          {(formAction === "login" || formAction === "register") && (
-            <div className="flex items-center justify-center gap-3">
-              <span
-                className={`text-xl font-medium leading-4 cursor-pointer ${
-                  formAction == "login" ? "text-[#46a358]" : "text-[#3D3D3D]"
-                }`}
-                onClick={() => setFormAction("login")}
-              >
-                Login
-              </span>
-              <span>|</span>
-              <span
-                className={`text-xl font-medium leading-4  cursor-pointer ${
-                  formAction == "register" ? "text-[#46a358]" : "text-[#3D3D3D]"
-                }`}
-                onClick={() => setFormAction("register")}
-              >
-                Register
-              </span>
-            </div>
-          )}
-          {formAction == "verifyUser" && (
-            <div className="text-center w-[300px]">
-              <span
-                className={`text-xl font-medium leading-4 ${
-                  formAction == "verifyUser"
-                    ? "text-[#46a358]"
-                    : "text-[#3D3D3D]"
-                }`}
-              >
-                Verification
-              </span>
-              {
-                <VerifyUserForm
-                  setFormAction={setFormAction}
-                  userEmail={userEmail}
-                />
-              }
-            </div>
-          )}
-          {formAction == "forgotPassword" && (
-            <div className="text-center w-[300px]">
-              <span
-                className={`text-xl font-medium leading-4 ${
-                  formAction == "forgotPassword"
-                    ? "text-[#46a358]"
-                    : "text-[#3D3D3D]"
-                }`}
-              >
-                Forgot Password
-              </span>
-              {
-                <ForgotPassword
-                  setFormAction={setFormAction}
-                  setUserEmail={setUserEmail}
-                />
-              }
-            </div>
-          )}
-          {formAction == "resetPassword" && (
-            <div className="text-center w-[300px]">
-              <span
-                className={`text-xl font-medium leading-4 ${
-                  formAction == "resetPassword"
-                    ? "text-[#46a358]"
-                    : "text-[#3D3D3D]"
-                }`}
-              >
-                Forgot Password
-              </span>
-              {
-                <ResetPassword
-                  email={userEmail}
-                  setFormAction={setFormAction}
-                />
-              }
-            </div>
-          )}
-          {formAction == "login" && (
-            <LoginForm
-              setFormAction={setFormAction}
-              setUserEmail={setUserEmail}
-              setOpenModal={setOpenModal}
-              setGlobalState={setGlobalState}
-              globalState={globalState}
-            />
-          )}
-          {formAction == "register" && (
-            <RegisterForm
-              setFormAction={setFormAction}
-              setUserEmail={setUserEmail}
-            />
-          )}
-        </div>
-      </ModalWrapper>
-    </>
+      </div>
+      <LoginModal isOpen={loginModal} onClose={() => setLoginModal(false)} />
+    </header>
   );
 };
 

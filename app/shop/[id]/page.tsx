@@ -1,203 +1,239 @@
 "use client";
-
-import { useAxios } from "@/hooks/useAxios";
-import { useQuery } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
-import React from "react";
-
-import { ProductType } from "@/service/ShowProducts";
-import Image from "next/image";
-import Button from "@/components/ui/Button";
-import { Facebook, FacebookIcon, Heart } from "lucide-react";
+import { FacebookIcon, LikeIcon, LinkedinIcon, MessageIcon, TwitterIcon } from "@/assets/icon";
+import { CustomImage } from "@/components/CustomImage";
+import { URL } from "@/service/request";
+import { MinusOutlined, PlusOutlined } from "@ant-design/icons";
+import axios from "axios";
 import Link from "next/link";
-import {
-  ShareEmailIcon,
-  ShareFacebookIcon,
-  ShareLinkedinIcon,
-  ShareTwitterIcon,
-} from "@/public/images/icon";
+import React, { useEffect, useState } from "react";
+import Interested from "../page";
+import { Rate } from "antd";
 
-const ProductPage = () => {
-  const router = useRouter();
-  const { id } = useParams();
-  const axiosInstance = useAxios();
+interface SingleType {
+  basket: boolean;
+  category_id: string;
+  cost: number;
+  count: number;
+  discount: number;
+  image_url: string[];
+  liked: boolean;
+  product_description: string;
+  product_id: string;
+  product_name: string;
+  product_status: string;
+  short_description: string;
+  size: string[];
+  tags: string[];
+}
 
-  const fetchProduct = async (): Promise<ProductType> => {
-    const response = await axiosInstance.get(`/product/${id}`);
-    if (!response?.data) throw new Error("Product not found");
-    return response?.data;
+const Page = ({ params }: any) => {
+  const id = params.id;
+  const [singleData, setSingleData] = useState<SingleType | null>(null);
+  const [activeImage, setActiveImage] = useState<string>("");
+  const [count, setCount] = useState<number>(1);
+
+  const capitalizeFirstLetter = (str: string) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
-  const {
-    data: product,
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: ["product", id],
-    queryFn: fetchProduct,
-  });
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${URL}/product/${id}`);
+        setSingleData(response.data);
+        setActiveImage(response.data.image_url[0]);
+      } catch (error) {
+        console.error("Error fetching product data:", error);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  if (!singleData) {
+    return <div className="loader"></div>;
+  }
+
+  const handleIncrement = () => {
+    setCount((prevCount) => prevCount + 1);
+  };
+
+  const handleDecrement = () => {
+    if (count > 1) {
+      setCount((prevCount) => prevCount - 1);
+    }
+  };
+
+  const totalCost = singleData.cost * count;
+
+  const handleLike = () => {
+
+  };
 
   return (
-    <main className="mt-[12px]">
-      <div className="container">
-        <div className="w-full p-3">
-          <div>
-            <button
-              className="font-bold"
-              onClick={() => {
-                router.push("/");
-              }}
-            >
-              Home
-            </button>
-            <span> /</span>
-            <span> Shop</span>
-          </div>
-          {isLoading && <p className="loading-message">Loading product...</p>}
-          {isError && <p className="error-message">Error: {error.message}</p>}
-          {product && (
-            <div className="mt-10">
-              <div className="flex justify-between">
-                <div className="w-full flex justify-center">
-                  <Image
-                    src={
-                      product?.image_url ? product?.image_url[0] : "/logo.svg"
-                    }
-                    alt={
-                      product.product_name ? product.product_name : "Product"
-                    }
-                    className="w-full"
-                    width={400}
-                    height={400}
-                    style={{
-                      objectFit: "cover",
-                      objectPosition: "center",
-                      width: "400px",
-                      height: "400px",
-                    }}
-                    priority
+    <>
+      <section className="text-gray-600 body-font overflow-hidden">
+        <div className="container py-12 px-4 md:py-24 mx-auto">
+          <div className="mx-auto flex flex-col md:flex-row justify-center md:space-x-8 lg:space-x-12">
+            <div className="flex items-center space-y-4 md:space-y-0 md:space-x-8 flex-col md:flex-row">
+              <div className="flex flex-col justify-center items-start md:block">
+                {singleData.image_url.map((url, index) => (
+                  <CustomImage
+                    width={100}
+                    height={100}
+                    priority={true}
+                    onClick={() => setActiveImage(url)}
+                    key={index}
+                    alt={`Image ${index + 1}`}
+                    className="object-cover object-center rounded mb-2 duration-100 cursor-pointer hover:border-2 hover:border-green-500"
+                    src={url}
                   />
-                </div>
-                <div className="max-w-[576px] w-full">
-                  <h2 className="text-3xl font-bold leading-4 text-left text-[#3D3D3D]">
-                    {product.product_name}
-                  </h2>
-                  <div className="flex items-center justify-between my-5">
-                    <p className="text-green-700 text-xl font-bold leading-4 text-left">
-                      ${product.cost && product.cost.toFixed(2)}
-                    </p>
-                    <p>19 reviews</p>
-                  </div>
-                  <div>
-                    <p className="text-[#3D3D3D] text-sm font-medium leading-4 text-left">
-                      Short description:
-                    </p>
-                    <p className="text-sm font-normal leading-6 text-left text-[#727272] mt-[10px]">
-                      {product.short_description}
-                    </p>
-                  </div>
-                  <div className="mt-[10px]">
-                    <p className="text-[#3D3D3D] text-sm font-medium leading-4 text-left">
-                      Size:
-                    </p>
-                    <ul className="flex  items-center gap-[10px] mt-[10px]">
-                      {product?.size?.map((item) => (
-                        <li
-                          className="w-[28px] h-[28px] flex items-center justify-center text-sm font-normal text-[#727272] border-[#727272] border-[1px] rounded-full hover:border-[#46A358] hover:text-[#46A358] cursor-pointer hover:font-semibold"
-                          key={item}
-                        >
-                          {item.charAt(0)}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="mt-6 flex gap-6">
-                      <div className="flex items-center gap-3">
-                        <Button
-                          title="-"
-                          type="button"
-                          extraStyle="rounded-full text-[24px] !h-[40px]"
-                        />
-                        <span className="text-[20px]">0</span>
-                        <Button
-                          title="+"
-                          type="button"
-                          extraStyle="rounded-full text-[24px] !h-[40px]"
-                        />
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Button
-                          title="Buy Now"
-                          type="button"
-                          extraStyle="uppercase !h-[40px] hover:!text-[#46A358] hover:!bg-transparent font-semibold border border-transparent hover:border-[#46A358]"
-                        />
-                        <Button
-                          title="Add to Cart"
-                          type="button"
-                          extraStyle="uppercase !h-[40px] bg-transparent border border-[#46A358] !text-[#46A358] font-semibold hover:!text-white hover:bg-[#46A358]"
-                        />
-                        <Button
-                          title=""
-                          type="button"
-                          extraStyle="uppercase !h-[40px] bg-transparent border border-[#46A358] !text-[#46A358] font-semibold hover:!text-white hover:bg-[#46A358]"
-                          iconLeft={<Heart />}
-                        />
-                      </div>
-                    </div>
-                    <div className="text-[#727272] mt-6">
-                      <span>Tags: </span>
-                      {product?.tags?.map((tag) => (
-                        <span key={tag}>{tag} </span>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-4 mt-6">
-                      <span>Share this product:</span>
-                      <div className="flex items-center gap-[20px]">
-                        <Link
-                          href={"#"}
-                          className="text-[#3D3D3D] hover:text-[#46A358]"
-                        >
-                          <ShareFacebookIcon />
-                        </Link>
-                        <Link
-                          href={"#"}
-                          className="text-[#3D3D3D] hover:text-[#46A358]"
-                        >
-                          <ShareTwitterIcon />
-                        </Link>
-                        <Link
-                          href={"#"}
-                          className="text-[#3D3D3D] hover:text-[#46A358]"
-                        >
-                          <ShareLinkedinIcon />
-                        </Link>
-                        <Link
-                          href={"#"}
-                          className="text-[#3D3D3D] hover:text-[#46A358]"
-                        >
-                          <ShareEmailIcon />
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
-              <div className="w-full mt-[90px]">
-                <div className="border-b-[1px] border-[#46A35880]">
-                  <span className="border-b-[3px] border-[#46A358] pb-3 inline-block text-[#46a358] font-semibold text-[18px]">
-                    Product Description
-                  </span>
-                </div>
-                <p className="text-sm font-normal leading-6 text-left text-[#727272]">
-                  {product?.product_description}
-                </p>
+              <div className="relative">
+                <img
+                  src={"/search-icon.svg"}
+                  alt="search"
+                  className="text-[#3D3D3D] w-[15px] h-[15px] absolute top-0 right-0"
+                />
+                <CustomImage
+                  width={400}
+                  priority={false}
+                  height={400}
+                  alt={singleData.product_name || "Product Image"}
+                  src={activeImage || "/fallback-image.jpg"} 
+                />
               </div>
             </div>
-          )}
+            <div className="max-w-[520px] w-full mt-8 md:mt-0">
+              <h2 className="text-2xl md:text-[28px] font-bold leading-tight text-[#3D3D3D] pt-4 md:pt-0 text-center md:text-start">
+                {singleData.product_name}
+              </h2>
+              <div className="flex items-center justify-between mt-8 md:mt-6 gap-x-8">
+                <p className="font-semibold text-2xl text-[#46A358]">
+                  ${totalCost.toFixed(2)}
+                </p>
+                <span className="flex items-center">
+                  <Rate allowHalf defaultValue={4} />
+                  <span className="font-normal text-sm md:text-[15px] text-[#3D3D3D] ml-2">
+                    19 Customer Reviews
+                  </span>
+                </span>
+              </div>
+              <div className="border-t border-[#46a35931] mt-4 mb-4"></div>
+              <h3 className="font-medium text-sm md:text-[15px] text-[#3D3D3D] pb-2">
+                Short Description:
+              </h3>
+              <p className="font-normal text-sm md:text-[14px] text-[#727272] pb-6">
+                {singleData.short_description}
+              </p>
+              <div className="">
+                <h4 className="font-medium text-sm md:text-[15px] text-[#3D3D3D] pb-2">
+                  Size:
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {singleData.size.map((size, index) => (
+                    <p
+                      key={index}
+                      className="font-bold text-lg cursor-pointer w-[35px] h-[35px] flex items-center justify-center rounded-full border-2 border-[#EAEAEA] hover:text-[#46A358] hover:border-[#46A358]"
+                    >
+                      {capitalizeFirstLetter(size)}
+                    </p>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center space-x-4 mt-6 flex-wrap">
+                <div className="flex items-center justify-center md:justify-start space-x-4 w-full md:w-auto mb-[20px] md:mb-0">
+                  <span
+                    className="flex items-center justify-center w-8 h-10 bg-[#46A358] text-white rounded-full hover:opacity-90 cursor-pointer"
+                    onClick={handleDecrement}
+                  >
+                    <MinusOutlined />
+                  </span>
+                  <span>{count}</span>
+                  <span
+                    className="flex items-center justify-center w-8 h-10 bg-[#46A358] text-white rounded-full hover:opacity-90 cursor-pointer"
+                    onClick={handleIncrement}
+                  >
+                    <PlusOutlined />
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Link
+                    href={"/shop/order"}
+                    className="border border-[#46A358] hover:bg-[#46A358] hover:text-white duration-300 cursor-pointer w-[130px] h-[40px] flex items-center justify-center rounded text-[#46A358] font-bold text-sm"
+                  >
+                    BUY NOW
+                  </Link>
+                  <Link
+                    href={"/shop/order"}
+                    className="border border-[#46A358] hover:bg-[#46A358] hover:text-white duration-300 cursor-pointer w-[130px] h-[40px] flex items-center justify-center rounded text-[#46A358] font-bold text-sm"
+                  >
+                    ADD TO CART
+                  </Link>
+                  <span className="flex items-center justify-center w-10 h-10 border border-[#46A358] rounded hover:text-white hover:bg-[#46A358] cursor-pointer" onClick={handleLike}>
+                    <LikeIcon />
+                  </span>
+                </div>
+              </div>
+              <div className="mt-6">
+                <p className="font-normal text-sm text-[#727272] pb-2">
+                  SKU: {singleData.product_id}
+                </p>
+                <h4 className="font-normal text-sm text-[#727272]">
+                  Categories: {singleData.product_status}
+                </h4>
+                <span className="flex items-center flex-wrap gap-1 font-normal text-sm text-[#727272] pt-3 pb-4">
+                  Tags:
+                  {singleData.tags.map((tag, index) => (
+                    <span key={index} className="text-sm text-[#3D3D3D]">
+                      {tag}
+                    </span>
+                  ))}
+                </span>
+              </div>
+              <div className="flex items-center space-x-4">
+                <h4 className="font-medium text-sm text-[#3D3D3D]">
+                  Share this product:{" "}
+                </h4>
+                <span className="flex items-center space-x-4">
+                  <Link
+                    className="hover:text-[#46A358] duration-300 cursor-pointer"
+                    href={"https://facebook.com"}
+                    target="_blank"
+                  >
+                    <FacebookIcon />
+                  </Link>
+                  <Link
+                    className="hover:text-[#46A358] duration-300 cursor-pointer"
+                    href={"https://twitter.com"}
+                    target="_blank"
+                  >
+                    <TwitterIcon />
+                  </Link>
+                  <Link
+                    className="hover:text-[#46A358] duration-300 cursor-pointer"
+                    href={"https://linkedin.com"}
+                    target="_blank"
+                  >
+                    <LinkedinIcon />
+                  </Link>
+                  <Link
+                    className="hover:text-[#46A358] duration-300 cursor-pointer"
+                    href={"https://.com"}
+                    target="_blank"
+                  >
+                    <MessageIcon />
+                  </Link>
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </main>
+      </section>
+      <Interested />
+    </>
   );
 };
 
-export default ProductPage;
+export default Page;

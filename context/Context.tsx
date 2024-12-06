@@ -1,70 +1,58 @@
 "use client";
-import React, {
-  createContext,
-  useState,
-  ReactNode,
-  SetStateAction,
-} from "react";
+import { createContext, useEffect, useState } from "react";
+import axios from "axios";
+import { URL } from "@/service/request";
 
-interface ContextType {
-  globalState: number;
-  setGlobalState: React.Dispatch<SetStateAction<number>>;
-  categoryName: string | null;
-  setCategoryName: React.Dispatch<SetStateAction<string | null>>;
-  tagName: string | null;
-  setTagName: React.Dispatch<SetStateAction<string | null>>;
-  maxPrice: number;
-  setMaxPrice: React.Dispatch<SetStateAction<number>>;
-  minPrice: number;
-  setMinPrice: React.Dispatch<SetStateAction<number>>;
-  size: string | null;
-  setSize: React.Dispatch<SetStateAction<string | null>>;
+interface BasketType { basket: boolean; category_id: string; cost: number; count: number; discount: number; image_url: string[]; liked: boolean; product_description: string; product_id: string; product_name: string; product_status: string; short_description: string; size: string[]; tags: string[];
 }
 
-export const Context = createContext<ContextType>({
-  globalState: 0,
-  setGlobalState: () => {},
-  categoryName: null,
-  setCategoryName: () => {},
-  tagName: null,
-  setTagName: () => {},
-  maxPrice: 900,
-  setMaxPrice: () => {},
-  minPrice: 25,
-  setMinPrice: () => {},
-  size: null,
-  setSize: () => {},
-});
+export const Context = createContext<any>(null);
 
-interface CountryContextProps {
-  children: ReactNode;
-}
+export const BasketListContext = ({ children }: any) => {
+  const [basketList, setBasketList] = useState<BasketType[]>([]);
+  const token = window.localStorage.getItem("token");
+  const [refreshContext, setRefreshContext] = useState<boolean>(false);
 
-export const GreenShopContext: React.FC<CountryContextProps> = ({
-  children,
-}) => {
-  const [globalState, setGlobalState] = useState(0);
-  const [categoryName, setCategoryName] = useState<string | null>(null);
-  const [tagName, setTagName] = useState<string | null>(null);
-  const [maxPrice, setMaxPrice] = useState(900);
-  const [minPrice, setMinPrice] = useState(25);
-  const [size, setSize] = useState<string | null>(null);
+  useEffect(() => {
+    if (token) {
+      axios
+        .get(`${URL}/basket`, {
+          params: { page: 1, limit: 100 },
+          headers: { Authorization: "Bearer " + token },
+        })
+        .then((response) => {
+          setBasketList(response.data.ProductId);
+        })
+        .catch((error) => {
+          console.error("Error fetching basket data:", error);
+        });
+    }
+  }, [refreshContext]);
+
+  useEffect(() => {
+    if (token) {
+      axios
+        .get(`${URL}/basket`, {
+          params: {
+            page: 1,
+            limit: 100,
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((response) => {
+          setBasketList(response.data.ProductId);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+  }, [token]);
+
   return (
     <Context.Provider
-      value={{
-        globalState,
-        setGlobalState,
-        categoryName,
-        setCategoryName,
-        tagName,
-        setTagName,
-        maxPrice,
-        setMaxPrice,
-        minPrice,
-        setMinPrice,
-        size,
-        setSize,
-      }}
+      value={{ basketList, setBasketList, refreshContext, setRefreshContext }}
     >
       {children}
     </Context.Provider>

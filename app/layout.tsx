@@ -1,24 +1,15 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
-import ReactQueryProvider from "@/query/ReactQueryProvider";
-import { GreenShopContext } from "@/context/Context";
+import Footer from "@/components/Footer";
+import { BasketListContext } from "@/context/context";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Greenshop",
-  description: "A website that people can buy and search flowers.",
+  title: "Green Shop",
+  description: "Green Shop Project",
 };
 
 export default function RootLayout({
@@ -27,23 +18,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html suppressHydrationWarning lang="en">
-        <head>
-        <link rel="icon" href="/icon-logo.svg" type="image/svg+xml" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <html lang="en">
+      <head>
+        <link rel="icon" href="/logo-icon.svg" />
       </head>
-      <body
-        suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ReactQueryProvider>
-          <GreenShopContext>
-            <>
-              <Header />
-              {children}
-            </>
-          </GreenShopContext>
-        </ReactQueryProvider>
+      <body className={inter.className}>
+        <BasketListContext>
+          <Header />
+          <main className="pt-[80px]">{children}</main>
+          <Footer />
+        </BasketListContext>
       </body>
     </html>
   );

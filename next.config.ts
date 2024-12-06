@@ -1,15 +1,10 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  env: {
+    URL: "http://3.125.43.204.:7777/v1/",
+  },
   images: {
-    remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: '3.125.43.204',
-        port: '9000',
-        pathname: '/image/**', 
-      },
-    ],
+    domains: ["3.70.236.23", "dummyimage.com"],
   },
 };
 
